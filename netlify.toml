@@ -1,27 +1,5 @@
-plugins = []
-functionsDirectory = "C:\\앱\\netlify\\functions"
-functionsDirectoryOrigin = "config"
-headers = []
-redirects = []
+[build]
+  functions = "netlify/functions"
 
 [functions]
-
-  [functions."*"]
-  node_bundler = "zisi"
-
-[build]
-functions = "C:\\앱\\netlify\\functions"
-
-  [build.environment]
-
-  [build.processing]
-
-    [build.processing.css]
-
-    [build.processing.html]
-
-    [build.processing.images]
-
-    [build.processing.js]
-
-  [build.services]
+  node_bundler = "esbuild"
