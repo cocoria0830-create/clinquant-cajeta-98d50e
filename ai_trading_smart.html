@@ -295,11 +295,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <script>
 function apiUrl(path){
   const isNetlify=window.location.hostname.includes('netlify');
-  if(isNetlify){
-    const parts=path.split('?');
-    const encoded='/.netlify/functions/upbit?path='+encodeURIComponent(parts[0])+(parts[1]?'&'+parts[1]:'');
-    return encoded;
-  }
+  if(isNetlify)return'/.netlify/functions/upbit?path='+encodeURIComponent(path);
   return'https://api.upbit.com'+path;
 }
 const MAJOR_COINS=['KRW-BTC','KRW-ETH','KRW-XRP','KRW-SOL','KRW-DOGE','KRW-ADA','KRW-TRX','KRW-AVAX','KRW-SHIB','KRW-DOT','KRW-MATIC','KRW-LINK','KRW-ATOM','KRW-UNI','KRW-LTC','KRW-ETC','KRW-BCH','KRW-APT','KRW-OP','KRW-ARB'];
@@ -588,8 +584,5 @@ async function fetchTickers(){
 handleResize();window.addEventListener('resize',()=>{drawChart();handleResize();});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}
 </script>
-</body>
-</html>
-
 </body>
 </html>
