@@ -6,15 +6,13 @@ exports.handler = async function(event) {
   
   const extra = Object.entries(qs)
     .filter(([k]) => k !== 'path')
-    .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+    .map(([k, v]) => k + '=' + v)
     .join('&');
   
   const fullUrl = 'https://api.upbit.com' + path + (extra ? '?' + extra : '');
   
-  console.log('Fetching:', fullUrl);
-  
   return new Promise((resolve) => {
-    https.get(fullUrl, {
+    const req = https.get(fullUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
     }, (res) => {
       let data = '';
@@ -23,4 +21,16 @@ exports.handler = async function(event) {
         resolve({
           statusCode: 200,
           headers: {
-            'Access-Control
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+          },
+          body: data
+        });
+      });
+    });
+    req.on('error', (e) => {
+      resolve({ statusCode: 500, headers: {'Access-Control-Allow-Origin':'*'}, body: JSON.stringify({error: e.message}) });
+    });
+    req.setTimeout(8000, () => { req.destroy(); resolve({ statusCode: 408, headers: {'Access-Control-Allow-Origin':'*'}, body: JSON.stringify({error: 'timeout'}) }); });
+  });
+};
