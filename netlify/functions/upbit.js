@@ -1,12 +1,10 @@
 const https = require('https');
 
-exports.handler = async (event) => {
+exports.handler = async function(event) {
   const path = event.queryStringParameters && event.queryStringParameters.path
     ? event.queryStringParameters.path
     : '/v1/ticker?markets=KRW-BTC';
-
   const url = 'https://api.upbit.com' + path;
-
   return new Promise((resolve) => {
     const req = https.get(url, {
       headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
