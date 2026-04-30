@@ -574,9 +574,16 @@ async function loadAllCoins(){
 async function fetchTickers(){
   if(!COINS_LOADED)return;
   try{
-    const res=await fetch(apiUrl('/v1/ticker?markets='+MAJOR_COINS.join(',')));
-    if(res.ok){const data=await res.json();
-      if(Array.isArray(data)){data.forEach(ticker=>{const prev=priceData[ticker.market];priceData[ticker.market]=ticker;if(!priceHistory[ticker.market])priceHistory[ticker.market]=[];priceHistory[ticker.market].push(ticker.trade_price);if(priceHistory[ticker.market].length>100)priceHistory[ticker.market].shift();updateCoinCard(ticker,prev);});if(priceData[selectedCoin])updateDetail(priceData[selectedCoin]);drawChart();document.getElementById('last-time').textContent=new Date().toTimeString().slice(0,8);}
+    const chunkSize=10;
+    const allData=[];
+    for(let i=0;i<MAJOR_COINS.length;i+=chunkSize){
+      const chunk=MAJOR_COINS.slice(i,i+chunkSize);
+      const res=await fetch(apiUrl('/v1/ticker?markets='+chunk.join(',')));
+      if(res.ok){const data=await res.json();if(Array.isArray(data))allData.push(...data);}
+    }
+    if(allData.length>0){
+      allData.forEach(ticker=>{const prev=priceData[ticker.market];priceData[ticker.market]=ticker;if(!priceHistory[ticker.market])priceHistory[ticker.market]=[];priceHistory[ticker.market].push(ticker.trade_price);if(priceHistory[ticker.market].length>100)priceHistory[ticker.market].shift();updateCoinCard(ticker,prev);});
+      if(priceData[selectedCoin])updateDetail(priceData[selectedCoin]);drawChart();document.getElementById('last-time').textContent=new Date().toTimeString().slice(0,8);
     }
   }catch(e){document.getElementById('last-time').textContent='연결 오류';}
 }
