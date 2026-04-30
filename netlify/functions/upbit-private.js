@@ -1,14 +1,21 @@
 const https = require('https');
 const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
+
+function generateToken(accessKey, secretKey) {
+  const payload = {
+    access_key: accessKey,
+    nonce: crypto.randomUUID()
+  };
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', secretKey).update(`${header}.${body}`).digest('base64url');
+  return `${header}.${body}.${signature}`;
+}
 
 exports.handler = async function(event) {
   const accessKey = process.env.UPBIT_ACCESS_KEY;
   const secretKey = process.env.UPBIT_SECRET_KEY;
-  const action = event.queryStringParameters?.action || 'balance';
-
-  const payload = { access_key: accessKey, nonce: uuidv4() };
-  const token = require('jsonwebtoken').sign(payload, secretKey);
+  const token = generateToken(accessKey, secretKey);
 
   return new Promise((resolve) => {
     const options = {
