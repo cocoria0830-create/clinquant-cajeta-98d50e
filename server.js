@@ -16,6 +16,21 @@ const server = http.createServer((req, res) => {
   if(req.method==='OPTIONS'){res.writeHead(200);res.end();return;}
   
   const parsedUrl = url.parse(req.url, true);
+
+  // IP 확인 엔드포인트
+  if(parsedUrl.pathname === '/ip') {
+    https.get('https://api.ipify.org?format=json', (ipRes) => {
+      let data = '';
+      ipRes.on('data', chunk => data += chunk);
+      ipRes.on('end', () => {
+        res.setHeader('Content-Type','application/json');
+        res.writeHead(200);
+        res.end(data);
+      });
+    });
+    return;
+  }
+
   const accessKey = process.env.UPBIT_ACCESS_KEY;
   const secretKey = process.env.UPBIT_SECRET_KEY;
   const token = generateToken(accessKey, secretKey);
