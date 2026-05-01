@@ -621,9 +621,24 @@ function generateJWT(accessKey, secretKey){
 async function fetchRealBalance(){
   if(!upbitAccessKey||!upbitSecretKey)return;
   try{
-    const res=await fetch('/.netlify/functions/upbit-private');
+    // Generate JWT for direct browser call
+    const header = btoa(JSON.stringify({alg:'HS256',typ:'JWT'})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const payloadObj = {access_key:upbitAccessKey, nonce:crypto.randomUUID()};
+    const payloadStr = btoa(unescape(encodeURIComponent(JSON.stringify(payloadObj)))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    
+    // Import key for HMAC-SHA256
+    const enc = new TextEncoder();
+    const keyData = enc.encode(upbitSecretKey);
+    const cryptoKey = await crypto.subtle.importKey('raw', keyData, {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(`${header}.${payloadStr}`));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const token = `${header}.${payloadStr}.${sigB64}`;
+
+    const res = await fetch('https://api.upbit.com/v1/accounts', {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+    });
     if(res.ok){
-      const data=await res.json();
+      const data = await res.json();
       if(Array.isArray(data)){
         let krwBalance=0;
         data.forEach(item=>{
