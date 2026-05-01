@@ -634,8 +634,8 @@ async function fetchRealBalance(){
     const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
     const token = `${header}.${payloadStr}.${sigB64}`;
 
-    const res = await fetch('https://api.upbit.com/v1/accounts', {
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+    const res = await fetch('https://clinquant-cajeta-98d50e.onrender.com/', {
+      headers: { 'Accept': 'application/json' }
     });
     if(res.ok){
       const data = await res.json();
