@@ -167,7 +167,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <div class="panel-title">모의 포트폴리오</div>
   <div class="pf-wrap">
     <div class="pf-grid">
-      <div class="pf-item"><div class="pf-label">시작 원금</div><div class="pf-value" style="font-size:12px;">₩10,000,000</div></div>
+      <div class="pf-item"><div class="pf-label">시작 원금</div><div class="pf-value" style="font-size:12px;" id="start-balance">₩10,000,000</div></div>
       <div class="pf-item"><div class="pf-label">모의 수익</div><div class="pf-value pos" id="total-pnl">계산중...</div></div>
       <div class="pf-item"><div class="pf-label">승률</div><div class="pf-value" id="win-rate">--%</div></div>
       <div class="pf-item"><div class="pf-label">총 거래</div><div class="pf-value" id="trade-count">0건</div></div>
@@ -647,6 +647,7 @@ async function fetchRealBalance(){
         if(krwBalance>0){
           mockBalance=krwBalance;
           document.getElementById('mock-balance').textContent='₩'+Math.round(krwBalance).toLocaleString('ko-KR');
+          document.getElementById('start-balance').textContent='₩'+Math.round(krwBalance).toLocaleString('ko-KR');
           document.getElementById('real-balance-badge').style.display='inline';
         }
       }
