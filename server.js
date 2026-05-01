@@ -188,8 +188,8 @@ async function runAutoTrade() {
           }
         }
 
-        // 매수 조건: RSI < 40, MA5 > MA20
-        if(rsi < BUY_RSI && ma5 > ma20 && krwBalance >= BUY_AMOUNT) {
+        // 매수 조건: RSI < 40
+        if(rsi < BUY_RSI && krwBalance >= BUY_AMOUNT) {
           if(holdingValue < krwBalance * MAX_PER_COIN) {
             log(`🟢 매수! ${coinName} RSI:${rsi.toFixed(1)}`);
             const orderBody = { market, side:'bid', price:String(BUY_AMOUNT), ord_type:'price' };
@@ -205,8 +205,8 @@ async function runAutoTrade() {
           }
         }
 
-        // 매도 조건: RSI > 60, MA5 < MA20
-        if(rsi > SELL_RSI && ma5 < ma20 && holdingQty > 0) {
+        // 매도 조건: RSI > 60
+        if(rsi > SELL_RSI && holdingQty > 0) {
           log(`🔴 매도! ${coinName} RSI:${rsi.toFixed(1)}`);
           const orderBody = { market, side:'ask', volume:String(holdingQty), ord_type:'market' };
           const queryStr = Object.keys(orderBody).map(k=>`${k}=${encodeURIComponent(orderBody[k])}`).join('&');
