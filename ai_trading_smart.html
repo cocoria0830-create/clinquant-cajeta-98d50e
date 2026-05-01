@@ -153,7 +153,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <div class="logo">AI<em>.</em>TRADE <span style="font-size:11px;color:var(--muted);letter-spacing:1px;">스마트 분석</span></div>
   <div class="hdr-right">
     <div class="live-badge"><div class="live-dot"></div> UPBIT LIVE</div>
-    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">업데이트: <span id="last-time">--:--:--</span></span>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">업데이트: <span id="last-time">--:--:--</span> <span id="real-balance-badge" style="display:none;font-size:10px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:2px 8px;border-radius:4px;margin-left:8px;">실거래</span> <button onclick="openApiModal()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;padding:4px 10px;border-radius:4px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;margin-left:8px;">API 연동</button></span>
   </div>
 </header>
 <div class="mobile-tabs" id="mobile-tabs">
@@ -590,6 +590,79 @@ async function fetchTickers(){
 (async()=>{await loadAllCoins();fetchTickers();setInterval(fetchTickers,5000);})();
 handleResize();window.addEventListener('resize',()=>{drawChart();handleResize();});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}
+
+// API Key Management
+let upbitAccessKey = localStorage.getItem('upbit_access_key') || '';
+let upbitSecretKey = localStorage.getItem('upbit_secret_key') || '';
+
+function openApiModal(){
+  document.getElementById('api-modal').style.display='flex';
+  document.getElementById('input-access-key').value=upbitAccessKey;
+  document.getElementById('input-secret-key').value=upbitSecretKey;
+}
+function closeApiModal(){document.getElementById('api-modal').style.display='none';}
+function saveApiKeys(){
+  upbitAccessKey=document.getElementById('input-access-key').value.trim();
+  upbitSecretKey=document.getElementById('input-secret-key').value.trim();
+  localStorage.setItem('upbit_access_key',upbitAccessKey);
+  localStorage.setItem('upbit_secret_key',upbitSecretKey);
+  document.getElementById('api-status').textContent='저장됐어요! 잔고를 불러오는 중...';
+  document.getElementById('api-status').style.color='#10b981';
+  setTimeout(()=>{closeApiModal();fetchRealBalance();},1000);
+}
+
+function generateJWT(accessKey, secretKey){
+  const header = btoa(JSON.stringify({alg:'HS256',typ:'JWT'})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const payload = btoa(JSON.stringify({access_key:accessKey,nonce:crypto.randomUUID()})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  // Note: JWT signature requires server-side - using API proxy
+  return `${header}.${payload}`;
+}
+
+async function fetchRealBalance(){
+  if(!upbitAccessKey||!upbitSecretKey)return;
+  try{
+    const res=await fetch('/.netlify/functions/upbit-private');
+    if(res.ok){
+      const data=await res.json();
+      if(Array.isArray(data)){
+        let krwBalance=0;
+        data.forEach(item=>{
+          if(item.currency==='KRW')krwBalance=parseFloat(item.balance);
+        });
+        if(krwBalance>0){
+          mockBalance=krwBalance;
+          document.getElementById('mock-balance').textContent='₩'+Math.round(krwBalance).toLocaleString('ko-KR');
+          document.getElementById('real-balance-badge').style.display='inline';
+        }
+      }
+    }
+  }catch(e){console.log('잔고 조회 실패',e);}
+}
+
+// Auto fetch balance on load if keys exist
+if(upbitAccessKey&&upbitSecretKey){setTimeout(fetchRealBalance,2000);}
+
 </script>
+
+<!-- API Key Modal -->
+<div id="api-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#111827;border:1px solid #1e2d45;border-radius:12px;padding:28px;width:400px;max-width:90vw;">
+    <h3 style="font-family:'Space Mono',monospace;color:#00d4ff;margin-bottom:6px;font-size:14px;letter-spacing:2px;">업비트 API 연동</h3>
+    <p style="color:#64748b;font-size:12px;margin-bottom:20px;">실제 잔고를 보려면 API 키를 입력하세요. 키는 이 브라우저에만 저장됩니다.</p>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-family:'Space Mono',monospace;">ACCESS KEY</div>
+      <input id="input-access-key" type="text" placeholder="Access Key 입력" style="width:100%;background:#1a2235;border:1px solid #1e2d45;border-radius:6px;padding:10px;color:#e2e8f0;font-family:'Space Mono',monospace;font-size:12px;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-family:'Space Mono',monospace;">SECRET KEY</div>
+      <input id="input-secret-key" type="password" placeholder="Secret Key 입력" style="width:100%;background:#1a2235;border:1px solid #1e2d45;border-radius:6px;padding:10px;color:#e2e8f0;font-family:'Space Mono',monospace;font-size:12px;">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="saveApiKeys()" style="flex:1;background:#00d4ff;color:#0a0e1a;border:none;border-radius:6px;padding:10px;font-weight:700;font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;">저장 & 연동</button>
+      <button onclick="closeApiModal()" style="flex:1;background:#1a2235;color:#64748b;border:1px solid #1e2d45;border-radius:6px;padding:10px;font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;">취소</button>
+    </div>
+    <div id="api-status" style="margin-top:12px;font-size:11px;color:#64748b;text-align:center;"></div>
+  </div>
+</div>
 </body>
 </html>
